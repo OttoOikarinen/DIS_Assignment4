@@ -1,0 +1,62 @@
+{
+  "library": [
+    {"id": 51, "name": "Riverside Archive", "location": "Riverside District"},
+    {"id": 52, "name": "North Hills Library", "location": "North Hills"},
+    {"id": 53, "name": "Lakeside Reading Room", "location": "Lakeside Park"},
+    {"id": 54, "name": "Harbor Public Library", "location": "Harborfront"},
+    {"id": 55, "name": "Oakwood Reading Room", "location": "Oakwood Avenue"},
+    {"id": 56, "name": "Maple Street Library", "location": "Maple Street"},
+    {"id": 57, "name": "Beacon Hill Collection", "location": "Beacon Hill"},
+    {"id": 58, "name": "Seaside Study Hall", "location": "Seaside Promenade"},
+    {"id": 59, "name": "Tech & Media Hub", "location": "Innovation Park"},
+    {"id": 60, "name": "Greenfield Learning Center", "location": "Greenfield"}
+  ],
+  "user": [
+    {"id": 61, "name": "Marco Alvarez", "email": "marco.alvarez@example.org"},
+    {"id": 62, "name": "Leila Haddad", "email": "leila.haddad@library.local"},
+    {"id": 63, "name": "Sofia Romano", "email": "sofia.romano@readers.net"},
+    {"id": 64, "name": "Tomáš Novák", "email": "tomas.novak@openmail.org"},
+    {"id": 65, "name": "Priya Sharma", "email": "priya.sharma@knowledge.io"},
+    {"id": 66, "name": "Liam O'Connell", "email": "liam.oconnell@community.org"},
+    {"id": 67, "name": "Zoe Kim", "email": "zoe.kim@readhub.net"},
+    {"id": 68, "name": "Noah Patel", "email": "noah.patel@infohub.org"},
+    {"id": 69, "name": "Maya Rodríguez", "email": "maya.rodriguez@bibliotech.com"},
+    {"id": 70, "name": "Oliver Svensson", "email": "oliver.svensson@library.co"}
+  ],
+  "book": [
+    {"id": 71, "title": "The Silent Orchard", "author": "Ava Mendes"},
+    {"id": 72, "title": "Glass Horizon", "author": "R. K. Bennett"},
+    {"id": 73, "title": "A House of Stars", "author": "Lin Wei"},
+    {"id": 74, "title": "The Last Cartographer", "author": "Daniela Cruz"},
+    {"id": 75, "title": "Echoes in Amber", "author": "S. T. Harper"},
+    {"id": 76, "title": "Paper Cities", "author": "Ivan Petrov"},
+    {"id": 77, "title": "The Willow's Secret", "author": "Nora Lang"},
+    {"id": 78, "title": "Sea of Lanterns", "author": "Hiro Tanaka"},
+    {"id": 79, "title": "Fragments of Noon", "author": "Maya Suleiman"},
+    {"id": 80, "title": "Beneath Copper Skies", "author": "Jonas Berg"}
+  ],
+  "sheet music": [
+    {"id": 81, "title": "Moonlit Etude", "composer": "Eleanor Grey"},
+    {"id": 82, "title": "Harbor Nocturne", "composer": "Marcus Vela"},
+    {"id": 83, "title": "Windmill Waltz", "composer": "Arielle Finn"},
+    {"id": 84, "title": "Clocktower Prelude", "composer": "Sebastian Kaur"},
+    {"id": 85, "title": "Cerulean Rhapsody", "composer": "Imani Duarte"},
+    {"id": 86, "title": "Silversong Suite", "composer": "Hugo Marin"},
+    {"id": 87, "title": "Desert Lullaby", "composer": "Farah Khan"},
+    {"id": 88, "title": "Northern Air", "composer": "Olaf Strand"},
+    {"id": 89, "title": "Glass Harp Etudes", "composer": "Mina Park"},
+    {"id": 90, "title": "Autumn Chorale", "composer": "Theo Laurent"}
+  ],
+  "comics": [
+    {"id": 91, "title": "Captain Nebula: Origins", "illustrator": "R. T. Nguyen"},
+    {"id": 92, "title": "Silent Alley", "illustrator": "Kara Mendes"},
+    {"id": 93, "title": "Pocket Giants", "illustrator": "Dmitri Volkov"},
+    {"id": 94, "title": "The Clockwork Cat", "illustrator": "Eun-Ji Cho"},
+    {"id": 95, "title": "Paper Skyline", "illustrator": "Hector Alvarez"},
+    {"id": 96, "title": "Lantern Harbor", "illustrator": "Sofia Ibarra"},
+    {"id": 97, "title": "Midnight Botanist", "illustrator": "Owen Price"},
+    {"id": 98, "title": "Threads of Tomorrow", "illustrator": "Yara Haddad"},
+    {"id": 99, "title": "Echo Park Mysteries", "illustrator": "Lena Fischer"},
+    {"id": 100, "title": "Starbound Caravan", "illustrator": "Mateo Ruiz"}
+  ]
+}
