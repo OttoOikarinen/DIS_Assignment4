@@ -63,7 +63,7 @@ def main():
 
 # Read choices
 def readChoices():
-    print("Which data do you want to read?")
+    print("Choose table.")
     # Create menu automatically from ALL_TABLES
     for i, table in enumerate(ALL_TABLES, start=1):
         print(f"{i}) {table}")
@@ -144,41 +144,82 @@ def insertIntoDatabase(sql_connection, mongo_db):
         return
 
     # Gather data to insert
-    try:
-        id = int(input("Enter id (number): "))
-        name = input("Enter name: ")
-        location = input("Enter location: ")
-    except ValueError:
-        print("Invalid input. ID must be an integer.")
-        return
+    id, first_insert, second_insert = gatherInsertData(chosen_table)
 
     if chosen_table in SQL_TABLES:
-        insertIntoSQLiteDatabase(sql_connection, chosen_table, id, name, location)
+        insertIntoSQLiteDatabase(sql_connection, chosen_table, id, first_insert, second_insert)
     elif chosen_table in NOSQL_TABLES:
-        insertIntoMongoDB(mongo_db, chosen_table, id, name, location)
+        insertIntoMongoDB(mongo_db, chosen_table, id, first_insert, second_insert)
     else:
         print(f"Table/collection '{chosen_table}' not found in either database.")
 
     return 0
 
+# Gather data based on table
+def gatherInsertData(chosen_table):
+    global HIGHEST_ID
+    HIGHEST_ID += 1
+    id = HIGHEST_ID
+
+    if chosen_table == "library":
+        first_insert_string = "Enter library name: "
+        second_insert_string = "Enter library location: "
+    elif chosen_table == "user":
+        first_insert_string = "Enter user name: "
+        second_insert_string = "Enter user email: "
+    elif chosen_table == "book":
+        first_insert_string = "Enter book title: "
+        second_insert_string = "Enter book author: "
+    elif chosen_table == "movie":
+        first_insert_string = "Enter movie title: "
+        second_insert_string = "Enter movie director: "
+    elif chosen_table == "cd":
+        first_insert_string = "Enter CD title: "
+        second_insert_string = "Enter CD artist: "
+    elif chosen_table == "sheet music":
+        first_insert_string = "Enter sheet music title: "
+        second_insert_string = "Enter sheet music composer: "
+    elif chosen_table == "comics":
+        first_insert_string = "Enter comic title: "
+        second_insert_string = "Enter comic illustrator: "
+
+    first_insert = input(first_insert_string)
+    second_insert = input(second_insert_string)
+
+    return id, first_insert, second_insert
+
+def getColumns(chosen_table):
+    if chosen_table == "library":
+        return "name", "location"
+    elif chosen_table == "user":
+        return "name", "email"
+    elif chosen_table == "book":
+        return "title", "author"
+    elif chosen_table == "movie":
+        return "title", "director"
+    elif chosen_table == "cd":
+        return "title", "artist"
+
 # Insert sqlite
-def insertIntoSQLiteDatabase(sql_connection, chosen_table, id, name, location):
+def insertIntoSQLiteDatabase(sql_connection, chosen_table, id, first_insert, second_insert):
     cursor = sql_connection.cursor()
+
+    column1, column2 = getColumns(chosen_table)
+
     try:
-        cursor.execute(f"INSERT INTO {chosen_table} (id, name, location) VALUES (?, ?, ?)", (id, name, location))
+        cursor.execute(f"INSERT INTO {chosen_table} (id, {column1}, {column2}) VALUES (?, ?, ?)", (id, first_insert, second_insert))
         sql_connection.commit()
-        print(f"Inserted into SQLite table '{chosen_table}': {id}, {name}, {location}")
+        print(f"Inserted into SQLite table '{chosen_table}': {id}, {first_insert}, {second_insert}")
     except sqlite3.Error as e:
         print(f"Error inserting into SQLite table '{chosen_table}': {e}")
     return 0
 
 # Insert MongoDB
-def insertIntoMongoDB(mongo_db, chosen_table, id, name, location):
+def insertIntoMongoDB(mongo_db, chosen_table, id, first_insert, second_insert):
     if chosen_table == "sheet music":
-        document = {"id": id, "title": name, "composer": location}
+        document = {"id": id, "title": first_insert, "composer": second_insert}
     elif chosen_table == "comics":
-        document = {"id": id, "title": name, "illustrator": location}
-
+        document = {"id": id, "title": first_insert, "illustrator": second_insert}
     #Insert document into collection
     try:
         collection = mongo_db[chosen_table]
