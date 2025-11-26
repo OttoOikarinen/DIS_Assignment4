@@ -42,8 +42,8 @@ def main():
         print("2) Update database")
         print("3) Delete from database")
         print("4) Insert into database")
-        print("5) Restore databases to original state")
         print("0) Exit")
+        cprint("NOTE: To restore databases to original state, choose option 0 and restart application.", "yellow")
         choice = input("Enter the number of your choice: ")
         if choice == '1':
             print("Reading from database.\n")
@@ -57,9 +57,9 @@ def main():
         elif choice == '4':
             print("Inserting into database.\n")
             insertIntoDatabase(sql_connection, mongo_db)
-        elif choice == '5':
-            print("Restoring databases to original state.\n")
-            restoreDatabases(mongo_client)
+        #elif choice == '5':
+        #    print("Restoring databases to original state.\n")
+        #    restoreDatabases(mongo_client)
         elif choice == '0':
             print("Exiting program.")
             exit()
@@ -353,6 +353,7 @@ def createSQLDatabase():
             cprint(f"Created database {SQL_DATABASE_FILE} successfully.", "green")
         else:   # If database file exists, just connect to it.
             cprint(f'{SQL_DATABASE_FILE} already exists.', "yellow")
+            restoreSQLDatabase()
             conn = sqlite3.connect(SQL_DATABASE_FILE)
 
     except Exception as e:
@@ -389,8 +390,19 @@ def createNoSQLDatabase():
     return client, mongo_db
 
 # Restore databases to their original state
-def restoreDatabases(mongo_client):
+def restoreNoSQLDatabase(mongo_client):
     
+    try:
+        mongo_client.drop_database(DB_NAME)
+        populate_mongo_from_seed(SEED_FILE, mongo_client, DB_NAME)
+        cprint(f"Restored database {DB_NAME} successfully.\n", "green")
+    except Exception as e:
+        cprint(f"Could not restore database {DB_NAME}: {e}", "red")
+
+    return 0
+
+# Restore SQL database from creation file
+def restoreSQLDatabase():
     try:
         if os.path.exists(SQL_DATABASE_FILE):
             cprint(f"Deleting database {SQL_DATABASE_FILE}...", "yellow")
@@ -399,13 +411,6 @@ def restoreDatabases(mongo_client):
             createSQLDatabase()
     except Exception:
         cprint(f"Error deleting database {SQL_DATABASE_FILE}.", "red")
-    
-    try:
-        mongo_client.drop_database(DB_NAME)
-        populate_mongo_from_seed(SEED_FILE, mongo_client, DB_NAME)
-        cprint(f"Restored database {DB_NAME} successfully.\n", "green")
-    except Exception as e:
-        cprint(f"Could not restore database {DB_NAME}: {e}", "red")
 
     return 0
 
