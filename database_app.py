@@ -13,20 +13,21 @@ SQL_CREATION_FILE = "create_SQL_DB.sql"
 DB_NAME="DIS_database"
 SEED_FILE="mongo_seed.json"
 URI="mongodb://localhost:27017/"
-HIGHEST_ID = 100
+HIGHEST_ID = 100    # In real application, we would query the databases to find the highest ID.
 
-# Data tables
+# Data tables to keep track what is where.
 ALL_TABLES = ["library", "user", "book", "movie", "cd", "sheet music", "comics"]
 SQL_TABLES = ["library", "user", "book", "movie", "cd"]
 NOSQL_TABLES = ["library", "user", "book", "sheet music", "comics"]
 
 # Main function to call all other functions.
 def main():
-    sql_connection = createSQLDatabase() # First create databases or restore them to original state.
+    # First create and connect to databases.
+    sql_connection = createSQLDatabase() 
     mongo_client, mongo_db = createNoSQLDatabase()
 
+    # Endless loop for user to make choices.
     while True:
-        
         print("What do you want to do?")
         print("1) Read from database")
         print("2) Update database")
@@ -36,35 +37,35 @@ def main():
         print("0) Exit")
         choice = input("Enter the number of your choice: ")
         if choice == '1':
-            print("Reading from database.")
+            print("Reading from database.\n")
             readDatabase(sql_connection, mongo_db, chosen_table=None)  
         elif choice == '2':
-            print("Updating database.")
+            print("Updating database.\n")
             updateDatabase(sql_connection, mongo_db)
         elif choice == '3':
-            print("Deleting from database")
+            print("Deleting from database\n")
             deleteFromDatabase(sql_connection, mongo_db)
         elif choice == '4':
-            print("Inserting into database.")
+            print("Inserting into database.\n")
             insertIntoDatabase(sql_connection, mongo_db)
         elif choice == '5':
-            print("Restoring databases to original state.")
+            print("Restoring databases to original state.\n")
             restoreDatabases(mongo_client)
         elif choice == '0':
-            print("Exiting program.")
+            print("Exiting program.\n")
             exit()
         else:
-            print("Invalid choice. Please try again.")
+            print("Invalid choice. Please try again.\n")
 
-    return 0
 
 # Read choices
 def readChoices():
-    print("Choose table.")
+    print("Choose table:")
+
     # Create menu automatically from ALL_TABLES
     for i, table in enumerate(ALL_TABLES, start=1):
         print(f"{i}) {table}")
-    print("0) Go back")
+    print("0) Go back\n")
     choice = input("Enter the number of your choice: ")
 
     # If 0, we go back to main menu
@@ -77,36 +78,41 @@ def readChoices():
         if 1 <= choice <= len(ALL_TABLES):
             return ALL_TABLES[choice - 1]
         else:
-            print("Invalid choice. Please try again.")
-            return readChoices()
+            print("Invalid choice. Please try again.\n")
+            return readChoices() # Recursive call for invalid input
     except ValueError:
-        print("Invalid input. Please enter a number.")
-        return readChoices()
+        print("Invalid input. Please enter a number.\n")
+        return readChoices() # Recursive call for invalid input
 
 # Read sqlite-database
 def readDatabase(sql_connection, mongo_db, chosen_table):
+    # In case no table has been chosen yet, ask user to choose one.
     if chosen_table is None:
         chosen_table = readChoices()
+    # If user chose to go back, return to main menu.
     if chosen_table == 0:
         return
+    
+    # Read from the chosen database(s). Try both if table exists in both.
     if chosen_table in SQL_TABLES:
         readSQLiteDatabase(sql_connection, chosen_table)
     if chosen_table in NOSQL_TABLES:
         readMongoDatabase(mongo_db, chosen_table)
-    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES:
+    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES: # Should never get here.
         print(f"Table/collection '{chosen_table}' not found in either database.")
 
     return 0
 
+# Read table from sqlite
 def readSQLiteDatabase(sql_connection, chosen_table):
     cursor = sql_connection.cursor()
     try:
-        print(f"Reading from SQLite table '{chosen_table}':")
         cursor.execute(f"SELECT * FROM {chosen_table}")
-        rows = cursor.fetchall()
+        rows = cursor.fetchall() # Fetch all rows from the table
             
-        for row in rows:
+        for row in rows:    # Print each row
             print(f"{row[0]}, {row[1]}, {row[2]}")
+        print()  
     except sqlite3.Error as e:
         print(f"Error reading from SQLite table '{chosen_table}': {e}")
     return 0
@@ -114,7 +120,7 @@ def readSQLiteDatabase(sql_connection, chosen_table):
 # Read MongoDB-database
 def readMongoDatabase(mongo_db, chosen_table):
     try:
-        print(f"Reading from MongoDB collection '{chosen_table}':")
+        
         collection = mongo_db[chosen_table]
         documents = collection.find()
         for doc in documents:
@@ -128,34 +134,37 @@ def readMongoDatabase(mongo_db, chosen_table):
             a, b, c = map(lambda x: "" if x is None else str(x), values[:3])
             print(f"{a}, {b}, {c}")
 
+        print()
     except pymongo.errors.PyMongoError as e:
         print(f"Error reading from MongoDB collection '{chosen_table}': {e}")
     return 0
 
 # Insert into database
 def insertIntoDatabase(sql_connection, mongo_db):
-    chosen_table = readChoices()
+    chosen_table = readChoices() # Choose table to insert into
     if chosen_table is None:
         return
 
     # Gather data to insert
-    id, first_insert, second_insert = gatherInsertData(chosen_table)
+    id, first_insert, second_insert = gatherInsertData(chosen_table)   # In its own function for clarity.
 
-    if chosen_table in SQL_TABLES:
+    if chosen_table in SQL_TABLES: # I decided to always use sqlite if table exists in both. Therefore if-elif is used.
         insertIntoSQLiteDatabase(sql_connection, chosen_table, id, first_insert, second_insert)
     elif chosen_table in NOSQL_TABLES:
         insertIntoMongoDB(mongo_db, chosen_table, id, first_insert, second_insert)
-    else:
-        print(f"Table/collection '{chosen_table}' not found in either database.")
+    else: # Should never get here.
+        print(f"Table/collection '{chosen_table}' not found in either database.\n")
 
     return 0
 
 # Gather data based on table
 def gatherInsertData(chosen_table):
-    global HIGHEST_ID
+    # Get the highest ID and add 1 for new entry.
+    global HIGHEST_ID 
     HIGHEST_ID += 1
     id = HIGHEST_ID
 
+    # Prompt strings based on table
     if chosen_table == "library":
         first_insert_string = "Enter library name: "
         second_insert_string = "Enter library location: "
@@ -178,11 +187,13 @@ def gatherInsertData(chosen_table):
         first_insert_string = "Enter comic title: "
         second_insert_string = "Enter comic illustrator: "
 
+    # Get inputs.
     first_insert = input(first_insert_string)
     second_insert = input(second_insert_string)
-
+    print()
     return id, first_insert, second_insert
 
+# Get column names based on table
 def getColumns(chosen_table):
     if chosen_table == "library":
         return "name", "location"
@@ -199,67 +210,65 @@ def getColumns(chosen_table):
     elif chosen_table == "comics":
         return "title", "illustrator"
 
-# Insert sqlite
+# Insert data to sqlite database
 def insertIntoSQLiteDatabase(sql_connection, chosen_table, id, first_insert, second_insert):
     cursor = sql_connection.cursor()
 
-    column1, column2 = getColumns(chosen_table)
+    column1, column2 = getColumns(chosen_table) # Get column names for the chosen table
 
     try:
         cursor.execute(f"INSERT INTO {chosen_table} (id, {column1}, {column2}) VALUES (?, ?, ?)", (id, first_insert, second_insert))
         sql_connection.commit()
-        print(f"Inserted into SQLite table '{chosen_table}': {id}, {first_insert}, {second_insert}")
     except sqlite3.Error as e:
         print(f"Error inserting into SQLite table '{chosen_table}': {e}")
     return 0
 
 # Insert MongoDB
 def insertIntoMongoDB(mongo_db, chosen_table, id, first_insert, second_insert):
-    if chosen_table == "sheet music":
-        document = {"id": id, "title": first_insert, "composer": second_insert}
-    elif chosen_table == "comics":
-        document = {"id": id, "title": first_insert, "illustrator": second_insert}
+    column1, column2 = getColumns(chosen_table) # Get column names for the chosen table
+    document = {"id": id, column1: first_insert, column2: second_insert}  # Create document to insert
     #Insert document into collection
     try:
         collection = mongo_db[chosen_table]
         collection.insert_one(document)
-        print(f"Inserted into MongoDB collection '{chosen_table}': {document}")
     except pymongo.errors.PyMongoError as e:
         print(f"Error inserting into MongoDB collection '{chosen_table}': {e}")
     return 0
 
 # Update from databases
 def updateDatabase(sql_connection, mongo_db):
-    chosen_table = readChoices()
+    chosen_table = readChoices() # Choose table to update
+
     if chosen_table is None:
         return
+    
+    # Show current data before updating
     readDatabase(sql_connection, mongo_db, chosen_table)
+
+    # Get data to update
     id_to_update = input("Enter the ID of the record to update: ")
     new_first_value = input("Enter the new value for the first field: ")
     new_second_value = input("Enter the new value for the second field: ")
 
+    # Here we try to update both databases, even when we know only one has the data. This is done to ease my workload.
     if chosen_table in SQL_TABLES:
         updateSQLiteDatabase(sql_connection, chosen_table, id_to_update, new_first_value, new_second_value)
     if chosen_table in NOSQL_TABLES:
         updateMongoDB(mongo_db, chosen_table, id_to_update, new_first_value, new_second_value)
-    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES:
-        print(f"Table/collection '{chosen_table}' not found in either database.")
+    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES: # Should never get here.
+        print(f"Table/collection '{chosen_table}' not found in either database.\n")
 
     return 0
 
 # Update sqlite
 def updateSQLiteDatabase(sql_connection, chosen_table, id_to_update, new_first_value, new_second_value):
     cursor = sql_connection.cursor()
-    column1, column2 = getColumns(chosen_table)
+    column1, column2 = getColumns(chosen_table) # Get column names for the chosen table
     try:
         cursor.execute(f"UPDATE {chosen_table} SET {column1} = ?, {column2} = ? WHERE id = ?", (new_first_value, new_second_value, id_to_update))
         sql_connection.commit()
-        if cursor.rowcount > 0:
-            print(f"Updated record with ID {id_to_update} in SQLite table '{chosen_table}'.")
-        else:
-            print(f"No record with ID {id_to_update} found in SQLite table '{chosen_table}'.")
     except sqlite3.Error as e:
-        print(f"Error updating SQLite table '{chosen_table}': {e}")
+        print(f"Error updating SQLite table '{chosen_table}': {e}\n")
     return 0
 
 # Update MongoDB
@@ -267,29 +276,30 @@ def updateMongoDB(mongo_db, chosen_table, id_to_update, new_first_value, new_sec
     try:
         collection = mongo_db[chosen_table]
         column1, column2 = getColumns(chosen_table)
-        result = collection.update_one({"id": int(id_to_update)}, {"$set": {column1: new_first_value, column2: new_second_value}})
-        if result.matched_count > 0:
-            print(f"Updated record with ID {id_to_update} in MongoDB collection '{chosen_table}'.")
-        else:
-            print(f"No record with ID {id_to_update} found in MongoDB collection '{chosen_table}'.")
+        collection.update_one({"id": int(id_to_update)}, {"$set": {column1: new_first_value, column2: new_second_value}})
+        
     except pymongo.errors.PyMongoError as e:
-        print(f"Error updating MongoDB collection '{chosen_table}': {e}")
+        print(f"Error updating MongoDB collection '{chosen_table}': {e}\n")
     return 0
 
 # Delete from databases
 def deleteFromDatabase(sql_connection, mongo_db):
-    chosen_table = readChoices()
+    chosen_table = readChoices() # Choose table to delete from
+
     if chosen_table is None:
         return
+    
+    # Show current data before deleting
     readDatabase(sql_connection, mongo_db, chosen_table)
     id_to_delete = input("Enter the ID of the record to delete: ")
 
+    # Here we try to delete from both databases, even when we know only one has the data. This is done to ease my workload.
     if chosen_table in SQL_TABLES:
         deleteFromSQLiteDatabase(sql_connection, chosen_table, id_to_delete)
     if chosen_table in NOSQL_TABLES:
         deleteFromMongoDB(mongo_db, chosen_table, id_to_delete)
-    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES:
-        print(f"Table/collection '{chosen_table}' not found in either database.")
+    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES: # Should never get here.
+        print(f"Table/collection '{chosen_table}' not found in either database.\n")
 
     return 0
 
@@ -300,12 +310,8 @@ def deleteFromSQLiteDatabase(sql_connection, chosen_table, id_to_delete):
     try:
         cursor.execute(f"DELETE FROM {chosen_table} WHERE id = ?", (id_to_delete,))
         sql_connection.commit()
-        if cursor.rowcount > 0:
-            print(f"Deleted record with ID {id_to_delete} from SQLite table '{chosen_table}'.")
-        else:
-            print(f"No record with ID {id_to_delete} found in SQLite table '{chosen_table}'.")
     except sqlite3.Error as e:
-        print(f"Error deleting from SQLite table '{chosen_table}': {e}")
+        print(f"Error deleting from SQLite table '{chosen_table}': {e}\n")
     return 0
 
 # Delete from MongoDB
@@ -313,25 +319,22 @@ def deleteFromSQLiteDatabase(sql_connection, chosen_table, id_to_delete):
 def deleteFromMongoDB(mongo_db, chosen_table, id_to_delete):
     try:
         collection = mongo_db[chosen_table]
-        result = collection.delete_one({"id": int(id_to_delete)})
-        if result.deleted_count > 0:
-            print(f"Deleted record with ID {id_to_delete} from MongoDB collection '{chosen_table}'.")
-        else:
-            print(f"No record with ID {id_to_delete} found in MongoDB collection '{chosen_table}'.")
+        collection.delete_one({"id": int(id_to_delete)})
+        
     except pymongo.errors.PyMongoError as e:
-        print(f"Error deleting from MongoDB collection '{chosen_table}': {e}")
+        print(f"Error deleting from MongoDB collection '{chosen_table}': {e}\n")
     return 0
 
 # Create databases if they don't already exist.
 def createSQLDatabase():
-    
+    # Check if schema file exists
     if not os.path.exists(SQL_CREATION_FILE):
         print(f"Schema file for SQL-database does not exist. Cannot create database.")
         exit()
     
     try: 
         print("Connecting to SQLite database...")
-        if not os.path.exists(SQL_DATABASE_FILE):
+        if not os.path.exists(SQL_DATABASE_FILE):   # If database file does not exist, create it.
             with open(SQL_CREATION_FILE, 'r', encoding='utf-8') as file:
                 schema_sql = file.read()
 
@@ -340,7 +343,7 @@ def createSQLDatabase():
             cursor.executescript(schema_sql)
             conn.commit()
             print(f"Created database {SQL_DATABASE_FILE} successfully.")
-        else:
+        else:   # If database file exists, just connect to it.
             print(f'{SQL_DATABASE_FILE} already exists.')
             conn = sqlite3.connect(SQL_DATABASE_FILE)
 
@@ -349,7 +352,7 @@ def createSQLDatabase():
         print("Closing application.")
         exit()
 
-    print("Connected to SQLite database successfully.")
+    print("Connected to SQLite database successfully.\n")
     return conn
 
 def createNoSQLDatabase():
@@ -374,7 +377,7 @@ def createNoSQLDatabase():
                 pass
 
     populate_mongo_from_seed(SEED_FILE, client, DB_NAME)
-    print("Connected to MongoDB database successfully.")
+    print("Connected to MongoDB database successfully.\n")
     return client, mongo_db
 
 # Restore databases to their original state
@@ -391,7 +394,7 @@ def restoreDatabases(mongo_client):
     try:
         mongo_client.drop_database(DB_NAME)
         populate_mongo_from_seed(SEED_FILE, mongo_client, DB_NAME)
-        print(f"Restored database {DB_NAME} successfully.")
+        print(f"Restored database {DB_NAME} successfully.\n")
     except Exception as e:
         print(f"Could not restore database {DB_NAME}: {e}")
 
