@@ -40,7 +40,7 @@ def main():
             readDatabase(sql_connection, mongo_db, chosen_table=None)  
         elif choice == '2':
             print("Updating database.")
-            #updateDatabase(connection)
+            updateDatabase(sql_connection, mongo_db)
         elif choice == '3':
             print("Deleting from database")
             deleteFromDatabase(sql_connection, mongo_db)
@@ -132,7 +132,6 @@ def readMongoDatabase(mongo_db, chosen_table):
         print(f"Error reading from MongoDB collection '{chosen_table}': {e}")
     return 0
 
-
 # Insert into database
 def insertIntoDatabase(sql_connection, mongo_db):
     chosen_table = readChoices()
@@ -195,6 +194,10 @@ def getColumns(chosen_table):
         return "title", "director"
     elif chosen_table == "cd":
         return "title", "artist"
+    elif chosen_table == "sheet music":
+        return "title", "composer"
+    elif chosen_table == "comics":
+        return "title", "illustrator"
 
 # Insert sqlite
 def insertIntoSQLiteDatabase(sql_connection, chosen_table, id, first_insert, second_insert):
@@ -225,17 +228,53 @@ def insertIntoMongoDB(mongo_db, chosen_table, id, first_insert, second_insert):
         print(f"Error inserting into MongoDB collection '{chosen_table}': {e}")
     return 0
 
-# Update choices
-
-
 # Update from databases
+def updateDatabase(sql_connection, mongo_db):
+    chosen_table = readChoices()
+    if chosen_table is None:
+        return
+    readDatabase(sql_connection, mongo_db, chosen_table)
+    id_to_update = input("Enter the ID of the record to update: ")
+    new_first_value = input("Enter the new value for the first field: ")
+    new_second_value = input("Enter the new value for the second field: ")
 
+    if chosen_table in SQL_TABLES:
+        updateSQLiteDatabase(sql_connection, chosen_table, id_to_update, new_first_value, new_second_value)
+    if chosen_table in NOSQL_TABLES:
+        updateMongoDB(mongo_db, chosen_table, id_to_update, new_first_value, new_second_value)
+    if chosen_table not in SQL_TABLES and chosen_table not in NOSQL_TABLES:
+        print(f"Table/collection '{chosen_table}' not found in either database.")
+
+    return 0
 
 # Update sqlite
-
+def updateSQLiteDatabase(sql_connection, chosen_table, id_to_update, new_first_value, new_second_value):
+    cursor = sql_connection.cursor()
+    column1, column2 = getColumns(chosen_table)
+    try:
+        cursor.execute(f"UPDATE {chosen_table} SET {column1} = ?, {column2} = ? WHERE id = ?", (new_first_value, new_second_value, id_to_update))
+        sql_connection.commit()
+        if cursor.rowcount > 0:
+            print(f"Updated record with ID {id_to_update} in SQLite table '{chosen_table}'.")
+        else:
+            print(f"No record with ID {id_to_update} found in SQLite table '{chosen_table}'.")
+    except sqlite3.Error as e:
+        print(f"Error updating SQLite table '{chosen_table}': {e}")
+    return 0
 
 # Update MongoDB
-
+def updateMongoDB(mongo_db, chosen_table, id_to_update, new_first_value, new_second_value):
+    try:
+        collection = mongo_db[chosen_table]
+        column1, column2 = getColumns(chosen_table)
+        result = collection.update_one({"id": int(id_to_update)}, {"$set": {column1: new_first_value, column2: new_second_value}})
+        if result.matched_count > 0:
+            print(f"Updated record with ID {id_to_update} in MongoDB collection '{chosen_table}'.")
+        else:
+            print(f"No record with ID {id_to_update} found in MongoDB collection '{chosen_table}'.")
+    except pymongo.errors.PyMongoError as e:
+        print(f"Error updating MongoDB collection '{chosen_table}': {e}")
+    return 0
 
 # Delete from databases
 def deleteFromDatabase(sql_connection, mongo_db):
